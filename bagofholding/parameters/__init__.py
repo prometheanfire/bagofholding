@@ -2,9 +2,9 @@
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License.  You may obtain a copy
-# of the License at http://www.apache.org/licenses/LICENSE-2.0.  
+# of the License at http://www.apache.org/licenses/LICENSE-2.0.
 #
-# Unless required by applicable law or agreed to in writing, software 
+# Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  See the
 # License for the specific language governing permissions and limitations under
@@ -12,16 +12,17 @@
 
 import logging
 import sys
+import os
 
 from bagofholding.parameters import helpers
 
-logger = logging.getLogger(__name__) # pylint: disable=C0103
+logger = logging.getLogger(__name__)  # pylint: disable=C0103
 
 CONFIG_DIR = os.path.join(os.path.expanduser("~"), ".config", "bagofholding")
 
 COMMON_PARAMETERS = [
-        { # --loglevel=LEVEL, -l=LEVEL; LEVEL => warning
-            "options": [ "--loglevel", "-l" ],
+        {  # --loglevel=LEVEL, -l=LEVEL; LEVEL => warning
+            "options": ["--loglevel", "-l"],
             "default": "warning",
             "metavar": "LEVEL",
             "choices": ["debug", "info", "warning", "error", "critical"],
@@ -29,8 +30,8 @@ COMMON_PARAMETERS = [
                     "The logging level (corresponds to the levels in the " \
                     "python logging module).  LEVEL defaults to warning.",
             },
-        { # --noop
-            "options": [ "--noop" ],
+        {  # --noop
+            "options": ["--noop"],
             "action": "store_true",
             "default": False,
             "help": \
@@ -38,8 +39,8 @@ COMMON_PARAMETERS = [
                     "changes.  Works like a dry run mode and forces info " \
                     "level logging.  Overrides --force if it is specified.",
             },
-        { # --configuration=DIR, -f=DIR; DIR => ~/.config/bagofholding
-            "options": [ "--configuration", "-f" ],
+        {  # --configuration=DIR, -f=DIR; DIR => ~/.config/bagofholding
+            "options": ["--configuration", "-f"],
             "default": CONFIG_DIR,
             "metavar": "DIR",
             "help": \
@@ -53,7 +54,8 @@ DEFAULTS.update(helpers.extract_defaults(COMMON_PARAMETERS))
 
 logger.debug("DEFAULTS: %s", DEFAULTS)
 
-class BagOfHoldingParameters(object): # pylint: disable=R0903,R0924
+
+class BagOfHoldingParameters(object):  # pylint: disable=R0903,R0924
     def __init__(self, *args, **kwargs):
         """Initialize the collapsed parameters for Singularity.
 
@@ -92,9 +94,9 @@ class BagOfHoldingParameters(object): # pylint: disable=R0903,R0924
         logger.debug("getting key: %s", key)
 
         if key.count(".") > 0:
-            section, short = key.split(".", 1) # pylint: disable=W0612
+            section, short = key.split(".", 1)  # pylint: disable=W0612
 
-        default = "" 
+        default = ""
         if short in DEFAULTS:
             default = DEFAULTS[short]
         logger.debug("default: %s", default)
@@ -106,12 +108,12 @@ class BagOfHoldingParameters(object): # pylint: disable=R0903,R0924
 
         # TODO Collapse dictionaries into one reference.
         # TODO Check for string length seems unnecessary.
-        if len(str(default)) and str(default) in sys.argv[0] or argument != default: # pylint: disable=C0301
-            logger.debug("Selected value: %s", argument)
-            return argument
+        if (len(str(default)) and str(default)
+            in sys.argv[0] or argument != default):
+                logger.debug("Selected value: %s", argument)
+                return argument
 
-        logger.debug("Selected value: %s", default or None) 
+        logger.debug("Selected value: %s", default or None)
         return default or None
 
 PARAMETERS = BagOfHoldingParameters()
-

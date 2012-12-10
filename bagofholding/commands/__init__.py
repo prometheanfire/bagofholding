@@ -2,17 +2,24 @@
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License.  You may obtain a copy
-# of the License at http://www.apache.org/licenses/LICENSE-2.0.  
+# of the License at http://www.apache.org/licenses/LICENSE-2.0.
 #
-# Unless required by applicable law or agreed to in writing, software 
+# Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  See the
 # License for the specific language governing permissions and limitations under
 # the License.
 
 import logging
+import os
+import re
+import itertools
+import sys
+import inspect
+import importlib
 
-logger = logging.getLogger(__name__) # pylint: disable=C00301
+logger = logging.getLogger(__name__)
+
 
 class BagOfHoldingCommand(object):
     def __init__(self):
@@ -44,10 +51,12 @@ class BagOfHoldingCommand(object):
 
     def run(self):
         """Do what this command should actually do."""
-        raise NotImplementedError("class {0} does not implement 'run(self)'".format(self.__class__.__name__)) # pylint: disable=C0301
+        raise NotImplementedError("class {0} does not implement \
+            'run(self)'".format(self.__class__.__name__))
+
 
 # TODO Switch this to an egg hook ...
-class BagOfHoldingCommands(object): # pylint: disalble=R0903
+class BagOfHoldingCommands(object):
     """Dictionary style object for interacting with the commands.
 
     Provides all commands that can be found in the various locations mapped to
@@ -58,7 +67,7 @@ class BagOfHoldingCommands(object): # pylint: disalble=R0903
     def __init__(self):
         self._commands = {}
 
-        mydir = os.path.abspath(os.path.dirname(__file__)) # Module's Directory
+        mydir = os.path.abspath(os.path.dirname(__file__))
         self.path = [
                 mydir,
                 re.sub(r"usr/", r"usr/local/", mydir),
@@ -79,13 +88,18 @@ class BagOfHoldingCommands(object): # pylint: disalble=R0903
             walk = list(os.walk(directory))
 
             filenames = []
-            filenames.extend(itertools.chain(*[ [ os.path.join(file_[0], name) for name in file_[1] ] for file_ in walk if len(file_[1]) ])) # pylint: disable=C0301
-            filenames.extend(itertools.chain(*[ [ os.path.join(file_[0], name) for name in file_[1] ] for file_ in walk if len(file_[1]) ])) # pylint: disable=C0301
-            filenames = list(set([ filename.replace(directory + "/", "") for filename in filenames ])) # pylint: disable=C0301
+            filenames.extend(itertools.chain(*[[os.path.join(file_[0], name)
+                for name in file_[1]] for file_ in walk if len(file_[1])]))
+            filenames.extend(itertools.chain(*[[os.path.join(file_[0], name)
+                for name in file_[1]] for file_ in walk if len(file_[1])]))
+            filenames = list(set([filename.replace(directory + "/", "")
+                for filename in filenames]))
 
             logger.debug("files found: %s", filenames)
 
-            module_names = list(set([ re.sub(r"\.py.?", "", filename).replace("/", ".") for filename in filenames if not re.search(r"(/|^)_", filename) ])) # pylint: disable=C0301
+            module_names = list(set([re.sub(r"\.py.?", "",
+                filename).replace("/", ".") for filename in filenames
+                if not re.search(r"(/|^)_", filename)]))
 
             logger.debug("module names: %s", module_names)
 
@@ -100,10 +114,13 @@ class BagOfHoldingCommands(object): # pylint: disalble=R0903
                     continue
 
             for module in modules:
-                for object_ in [ class_() for name, class_ in inspect.getmembers(module, inspect.isclass) if issubclass(class_, BagOfHoldingCommand) and class_ != BagOfHoldingCommand ]: # pylint: disable=C0301,W0612
-                    logger.debug("object, %s, found", object_)
-                    self._commands[object_.name] = object_
-    
+                for object_ in [class_() for name, class_ in
+                    inspect.getmembers(module, inspect.isclass) if
+                    issubclass(class_, BagOfHoldingCommand) and
+                    class_ != BagOfHoldingCommand]:
+                        logger.debug("object, %s, found", object_)
+                        self._commands[object_.name] = object_
+
     def __len__(self):
         return len(self._commands)
 
@@ -116,4 +133,3 @@ class BagOfHoldingCommands(object): # pylint: disalble=R0903
 
     def __contains__(self, item):
         return item in self._commands
-
